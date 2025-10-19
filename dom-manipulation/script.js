@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     restoreFilterPreference();
     setupEventListeners();
     showRandomQuote();
-    setInterval(syncWithServer, 30000);
 });
 
 function setupEventListeners() {
@@ -18,7 +17,6 @@ function setupEventListeners() {
     document.getElementById('exportBtn').addEventListener('click', exportToJsonFile);
     document.getElementById('importFile').addEventListener('change', importFromJsonFile);
     document.getElementById('categoryFilter').addEventListener('change', filterQuotes);
-    document.getElementById('syncBtn').addEventListener('click', syncWithServer);
 }
 
 function showRandomQuote() {
@@ -42,10 +40,8 @@ function showRandomQuote() {
     const randomIndex = Math.floor(Math.random() * filteredQuotes.length);
     const randomQuote = filteredQuotes[randomIndex];
     
-    document.getElementById('quoteText').textContent = `"${randomQuote.text}"`;
-    document.getElementById('quoteCategory').textContent = `- ${randomQuote.category}`;
-    
-    sessionStorage.setItem('lastViewedQuote', JSON.stringify(randomQuote));
+    document.getElementById('quoteText').textContent = randomQuote.text;
+    document.getElementById('quoteCategory').textContent = randomQuote.category;
 }
 
 function addQuote() {
@@ -61,10 +57,8 @@ function addQuote() {
     }
     
     const newQuote = {
-        id: generateId(),
         text: text,
-        category: category,
-        timestamp: new Date().toISOString()
+        category: category
     };
     
     quotes.push(newQuote);
@@ -77,20 +71,26 @@ function addQuote() {
     textInput.value = '';
     categoryInput.value = '';
     
-    alert('Quote added successfully!');
-    
-    if (currentFilter === 'all' || currentFilter === category) {
-        showRandomQuote();
-    }
+    showRandomQuote();
 }
 
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+function createAddQuoteForm() {
+    const formSection = document.querySelector('.add-quote-section');
+    const formHTML = `
+        <h3>Add New Quote</h3>
+        <div class="form-group">
+            <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+            <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+            <button id="addQuoteBtn" class="btn btn-secondary">Add Quote</button>
+        </div>
+    `;
+    formSection.innerHTML = formHTML;
+    
+    document.getElementById('addQuoteBtn').addEventListener('click', addQuote);
 }
 
 function saveQuotes() {
     localStorage.setItem('quotes', JSON.stringify(quotes));
-    localStorage.setItem('lastSync', new Date().toISOString());
 }
 
 function loadQuotes() {
@@ -99,10 +99,10 @@ function loadQuotes() {
         quotes = JSON.parse(savedQuotes);
     } else {
         quotes = [
-            { id: '1', text: 'The only way to do great work is to love what you do.', category: 'Inspiration', timestamp: new Date().toISOString() },
-            { id: '2', text: 'Innovation distinguishes between a leader and a follower.', category: 'Leadership', timestamp: new Date().toISOString() },
-            { id: '3', text: 'Stay hungry, stay foolish.', category: 'Motivation', timestamp: new Date().toISOString() },
-            { id: '4', text: 'The future belongs to those who believe in the beauty of their dreams.', category: 'Dreams', timestamp: new Date().toISOString() }
+            { text: 'The only way to do great work is to love what you do.', category: 'Inspiration' },
+            { text: 'Innovation distinguishes between a leader and a follower.', category: 'Leadership' },
+            { text: 'Stay hungry, stay foolish.', category: 'Motivation' },
+            { text: 'The future belongs to those who believe in the beauty of their dreams.', category: 'Dreams' }
         ];
         saveQuotes();
     }
@@ -119,7 +119,7 @@ function exportToJsonFile() {
     
     const link = document.createElement('a');
     link.href = URL.createObjectURL(dataBlob);
-    link.download = `quotes-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = 'quotes.json';
     link.click();
     
     URL.revokeObjectURL(link.href);
@@ -135,47 +135,17 @@ function importFromJsonFile(event) {
             const importedQuotes = JSON.parse(e.target.result);
             
             if (!Array.isArray(importedQuotes)) {
-                throw new Error('Invalid JSON format: Expected an array of quotes');
+                throw new Error('Invalid JSON format');
             }
             
-            const validQuotes = importedQuotes.filter(quote => 
-                quote.text && quote.category
-            );
-            
-            if (validQuotes.length === 0) {
-                throw new Error('No valid quotes found in the file');
-            }
-            
-            validQuotes.forEach(quote => {
-                if (!quote.id) {
-                    quote.id = generateId();
-                }
-                if (!quote.timestamp) {
-                    quote.timestamp = new Date().toISOString();
-                }
-            });
-            
-            quotes.push(...validQuotes);
+            quotes = importedQuotes;
             saveQuotes();
             populateCategories();
             showRandomQuote();
             
-            document.getElementById('syncStatus').textContent = `Imported ${validQuotes.length} quotes successfully!`;
-            document.getElementById('syncStatus').className = 'success';
-            
-            event.target.value = '';
-            
         } catch (error) {
-            alert(`Error importing quotes: ${error.message}`);
-            document.getElementById('syncStatus').textContent = 'Import failed!';
-            document.getElementById('syncStatus').className = 'error';
+            alert('Error importing quotes: ' + error.message);
         }
-    };
-    
-    fileReader.onerror = function() {
-        alert('Error reading file!');
-        document.getElementById('syncStatus').textContent = 'Import failed!';
-        document.getElementById('syncStatus').className = 'error';
     };
     
     fileReader.readAsText(file);
@@ -200,17 +170,13 @@ function populateCategories() {
     
     if (currentValue && categories.includes(currentValue)) {
         categoryFilter.value = currentValue;
-    } else if (currentValue === 'all') {
-        categoryFilter.value = 'all';
     }
 }
 
 function filterQuotes() {
     const selectedCategory = document.getElementById('categoryFilter').value;
     currentFilter = selectedCategory;
-    
     localStorage.setItem('lastFilter', selectedCategory);
-    
     showRandomQuote();
 }
 
@@ -221,6 +187,8 @@ function restoreFilterPreference() {
         currentFilter = lastFilter;
     }
 }
+
+createAddQuoteForm();
 
 async function syncWithServer() {
     const syncStatus = document.getElementById('syncStatus');
