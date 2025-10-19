@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Quote Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dynamic Quote Generator</h1>
+        </header>
+
+        <main>
+            <section class="filter-section">
+                <label for="categoryFilter">Filter by Category:</label>
+                <select id="categoryFilter">
+                    <option value="all">All Categories</option>
+                </select>
+            </section>
+
+            <section class="quote-section">
+                <div id="quoteDisplay" class="quote-display">
+                    <p id="quoteText">Click the button to show a random quote!</p>
+                    <p id="quoteCategory" class="category"></p>
+                </div>
+                <button id="newQuote" class="btn btn-primary">Show New Quote</button>
+            </section>
+
+            <section class="add-quote-section">
+                <h3>Add New Quote</h3>
+                <div class="form-group">
+                    <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+                    <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+                    <button id="addQuoteBtn" class="btn btn-secondary">Add Quote</button>
+                </div>
+            </section>
+
+            <section class="import-export-section">
+                <h3>Data Management</h3>
+                <div class="form-group">
+                    <button id="exportBtn" class="btn btn-secondary">Export Quotes to JSON</button>
+                    <input type="file" id="importFile" accept=".json" />
+                    <label for="importFile" class="file-label">Import Quotes</label>
+                </div>
+            </section>
+
+            <section class="sync-section">
+                <h3>Server Sync</h3>
+                <div class="form-group">
+                    <button id="syncBtn" class="btn btn-secondary">Sync with Server</button>
+                    <span id="syncStatus"></span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
